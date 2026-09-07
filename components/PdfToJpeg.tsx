@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -60,15 +61,10 @@ export default function PdfToJpeg() {
           throw new Error("Unable to create canvas context.");
         }
 
-        /*
-         * PDF.js sometimes has a TypeScript type mismatch with
-         * the browser CanvasRenderingContext2D.
-         *
-         * The cast below fixes that compatibility issue.
-         */
+        // PDF.js render
         const renderTask = page.render({
-          canvasContext:
-            context as unknown as CanvasRenderingContext2D,
+          canvas,
+          canvasContext: context,
           viewport,
         });
 
@@ -143,10 +139,7 @@ export default function PdfToJpeg() {
           type="file"
           accept=".pdf,application/pdf"
           onChange={(event) => {
-            setFile(
-              event.target.files?.[0] ?? null
-            );
-
+            setFile(event.target.files?.[0] ?? null);
             setProgress(0);
           }}
           className="block w-full cursor-pointer rounded-lg border border-slate-300 bg-white p-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
@@ -189,9 +182,7 @@ export default function PdfToJpeg() {
           step="0.05"
           value={quality}
           onChange={(event) => {
-            setQuality(
-              Number(event.target.value)
-            );
+            setQuality(Number(event.target.value));
           }}
           className="w-full"
         />
@@ -221,9 +212,7 @@ export default function PdfToJpeg() {
           step="0.25"
           value={scale}
           onChange={(event) => {
-            setScale(
-              Number(event.target.value)
-            );
+            setScale(Number(event.target.value));
           }}
           className="w-full"
         />
