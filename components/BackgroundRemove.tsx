@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { DragEvent, useEffect, useState } from "react";
 import { removeImageBackground } from "@/lib/backgroundRemove";
 import { downloadBlob } from "@/lib/imageTools";
 
@@ -9,8 +9,11 @@ export default function BackgroundRemove() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [result, setResult] = useState<string | null>(null);
+  const [resultBlob, setResultBlob] = useState<Blob | null>(null);
   const [loading, setLoading] = useState(false);
+  const [dragging, setDragging] = useState(false);
 
+  // Create preview for selected image
   useEffect(() => {
     if (!file) {
       setPreview(null);
@@ -18,14 +21,26 @@ export default function BackgroundRemove() {
     }
 
     const url = URL.createObjectURL(file);
-
     setPreview(url);
 
-    return () => URL.revokeObjectURL(url);
+    return () => {
+      URL.revokeObjectURL(url);
+    };
   }, [file]);
 
+  // Cleanup generated result URL
+  useEffect(() => {
+    return () => {
+      if (result) {
+        URL.revokeObjectURL(result);
+      }
+    };
+  }, [result]);
+
   const formatSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024) {
+      return `${bytes} B`;
+    }
 
     if (bytes < 1024 * 1024) {
       return `${(bytes / 1024).toFixed(1)} KB`;
@@ -42,16 +57,38 @@ export default function BackgroundRemove() {
       return;
     }
 
+    // Revoke previous result URL before replacing it
+    if (result) {
+      URL.revokeObjectURL(result);
+    }
+
     setFile(selected);
     setResult(null);
+    setResultBlob(null);
   };
 
   const removeFile = () => {
     if (loading) return;
 
+    if (result) {
+      URL.revokeObjectURL(result);
+    }
+
     setFile(null);
     setPreview(null);
     setResult(null);
+    setResultBlob(null);
+  };
+
+  const handleDrop = (event: DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    setDragging(false);
+
+    const droppedFile = event.dataTransfer.files?.[0];
+
+    if (droppedFile) {
+      handleFile(droppedFile);
+    }
   };
 
   const removeBackground = async () => {
@@ -63,21 +100,17 @@ export default function BackgroundRemove() {
     try {
       setLoading(true);
 
+      // Remove background
       const blob = await removeImageBackground(file);
 
+      // Create preview URL
       const resultUrl = URL.createObjectURL(blob);
 
+      // Store result for preview and manual download
       setResult(resultUrl);
-
-      downloadBlob(
-        blob,
-        file.name.replace(
-          /\.(jpg|jpeg|png|webp)$/i,
-          "_no_background.png"
-        )
-      );
+      setResultBlob(blob);
     } catch (error) {
-      console.error(error);
+      console.error("Background removal error:", error);
 
       alert(
         "Failed to remove background. Please try another image."
@@ -85,6 +118,19 @@ export default function BackgroundRemove() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const downloadResult = () => {
+    if (!resultBlob || !file) {
+      return;
+    }
+
+    const filename = file.name.replace(
+      /\.(jpg|jpeg|png|webp|gif|bmp|avif)$/i,
+      "_no_background.png"
+    );
+
+    downloadBlob(resultBlob, filename);
   };
 
   return (
@@ -125,9 +171,9 @@ export default function BackgroundRemove() {
         </div>
       </div>
 
-      {/* Upload / Preview Area */}
+      {/* Upload / Preview */}
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Original */}
+        {/* Original Image */}
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="mb-4 flex items-center justify-between">
             <div>
@@ -149,13 +195,29 @@ export default function BackgroundRemove() {
           </div>
 
           {!preview ? (
-            <label className="group flex min-h-\[320px\] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 px-6 text-center transition hover:border-blue-500 hover:bg-blue-50/50 dark:border-slate-700 dark:bg-slate-800/50 dark:hover:border-blue-500 dark:hover:bg-blue-950/20">
+            <label
+              htmlFor="background-image-upload"
+              onDragOver={(event) => {
+                event.preventDefault();
+                setDragging(true);
+              }}
+              onDragLeave={() => {
+                setDragging(false);
+              }}
+              onDrop={handleDrop}
+              className={`group flex min-h-\[320px\] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 text-center transition ${
+                dragging
+                  ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
+                  : "border-slate-300 bg-slate-50 hover:border-blue-500 hover:bg-blue-50/50 dark:border-slate-700 dark:bg-slate-800/50 dark:hover:border-blue-500 dark:hover:bg-blue-950/20"
+              }`}
+            >
               <input
+                id="background-image-upload"
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={(e) =>
-                  handleFile(e.target.files?.[0])
+                onChange={(event) =>
+                  handleFile(event.target.files?.[0])
                 }
               />
 
@@ -180,7 +242,9 @@ export default function BackgroundRemove() {
               </div>
 
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-                Drop your image here
+                {dragging
+                  ? "Drop your image here"
+                  : "Drop your image here"}
               </h3>
 
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -204,7 +268,7 @@ export default function BackgroundRemove() {
               </span>
 
               <p className="mt-4 text-xs text-slate-400">
-                JPG, PNG, WEBP and other image formats
+                JPG, PNG, WEBP, GIF and other image formats
               </p>
             </label>
           ) : (
@@ -237,6 +301,7 @@ export default function BackgroundRemove() {
                     disabled={loading}
                     className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-red-100 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-red-950/40 dark:hover:text-red-400"
                     aria-label="Remove image"
+                    title="Remove image"
                   >
                     <svg
                       className="h-5 w-5"
@@ -271,7 +336,7 @@ export default function BackgroundRemove() {
             </div>
 
             {result && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-blue-700 dark:bg-blue-950/50 dark:text-blue-400">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400">
                 <svg
                   className="h-3 w-3"
                   viewBox="0 0 24 24"
@@ -286,6 +351,7 @@ export default function BackgroundRemove() {
             )}
           </div>
 
+          {/* Transparent checkerboard preview */}
           <div
             className="flex min-h-\[320px\] items-center justify-center overflow-hidden rounded-xl border border-slate-200 p-4 dark:border-slate-700"
             style={{
@@ -299,7 +365,7 @@ export default function BackgroundRemove() {
             {result ? (
               <img
                 src={result}
-                alt="Background removed"
+                alt="Background removed result"
                 className="max-h-\[320px\] max-w-full object-contain"
               />
             ) : (
@@ -328,16 +394,41 @@ export default function BackgroundRemove() {
                 </p>
 
                 <p className="mt-1 text-xs text-slate-400">
-                  The background will be replaced with transparency.
+                  The background will be replaced with
+                  transparency.
                 </p>
               </div>
             )}
           </div>
+
+          {/* Manual Download */}
+          {resultBlob && (
+            <button
+              type="button"
+              onClick={downloadResult}
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-500/20"
+            >
+              <svg
+                className="h-5 w-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M12 3v12" />
+                <path d="m7 10 5 5 5-5" />
+                <path d="M5 21h14" />
+              </svg>
+
+              Download PNG
+            </button>
+          )}
         </div>
       </div>
 
       {/* Information */}
       <div className="grid gap-4 sm:grid-cols-2">
+        {/* Automatic Removal */}
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400">
@@ -365,6 +456,7 @@ export default function BackgroundRemove() {
           </div>
         </div>
 
+        {/* Local Processing */}
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400">
@@ -399,7 +491,7 @@ export default function BackgroundRemove() {
         </div>
       </div>
 
-      {/* Action */}
+      {/* Main Action */}
       <button
         type="button"
         onClick={removeBackground}
@@ -476,4 +568,3 @@ export default function BackgroundRemove() {
     </div>
   );
 }
-
