@@ -15,6 +15,13 @@ import PdfResize from "@/components/PdfResize";
 import ImageCompress from "@/components/ImageCompress";
 import ImageResize from "@/components/ImageResize";
 
+import PdfDivide from "@/components/PdfDivide";
+import PdfEdit from "@/components/PdfEdit";
+import ImageCrop from "@/components/ImageCrop";
+import BackgroundRemove from "@/components/BackgroundRemove";
+import ImageEffects from "@/components/ImageEffects";
+
+
 export default function Home() {
   const [activeTool, setActiveTool] = useState("markdown-to-pdf");
 
@@ -60,6 +67,26 @@ export default function Home() {
       id: "image-resize",
       name: "Resize Image",
     },
+    {
+      id: "pdf-divide",
+      name: "PDF → PDF Divide",
+    },
+    {
+      id: "pdf-edit",
+      name: "PDF → PDF Edit",
+    },
+    {
+      id: "background-remove",
+      name: "Image → Background Remove",
+    },
+    {
+      id: "image-effects",
+      name: "Image → Effects",
+    },
+    {
+      id: "image-crop",
+      name: "Image → Crop",
+    }
   ];
 
   // Markdown → PDF UI
@@ -137,6 +164,21 @@ export default function Home() {
 
       case "image-resize":
         return <ImageResize />;
+
+      case "pdf-divide":
+        return <PdfDivide />;
+
+      case "pdf-edit":
+        return <PdfEdit />;
+
+      case "background-remove":
+        return <BackgroundRemove />;
+
+      case "image-effects":
+        return <ImageEffects />;
+
+      case "image-crop":
+        return <ImageCrop />;
 
       default:
         return renderMarkdownTool();
