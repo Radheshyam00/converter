@@ -119,7 +119,7 @@ export default function PdfToJpeg() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
+      {/* <div>
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
           PDF → JPEG
         </h2>
@@ -127,7 +127,7 @@ export default function PdfToJpeg() {
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
           Convert every page of a PDF document into a JPEG image.
         </p>
-      </div>
+      </div> */}
 
       {/* File Upload */}
       <div>

@@ -45,9 +45,9 @@ export default function JpegToPdf() {
 
   return (
     <div className="space-y-5">
-      <h2 className="text-2xl font-bold">
+      {/* <h2 className="text-2xl font-bold">
         JPEG / Image → PDF
-      </h2>
+      </h2> */}
 
       <input
         type="file"
