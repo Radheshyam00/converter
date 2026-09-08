@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  useEffect,
-  useState,
-} from "react";
+import { useEffect, useState } from "react";
 
 import type {
   ChangeEvent,
@@ -16,9 +13,7 @@ import {
   type PdfEditItem,
 } from "@/lib/pdfEdit";
 
-import {
-  downloadBlob,
-} from "@/lib/imageTools";
+import { downloadBlob } from "@/lib/imageTools";
 
 type ToolMode =
   | "text"
@@ -33,6 +28,14 @@ type RGBColor = {
   g: number;
   b: number;
 };
+
+/*
+ * A4 CSS size at 96 DPI
+ * 210mm × 297mm
+ * ≈ 794px × 1123px
+ */
+const A4_WIDTH = 794;
+const A4_HEIGHT = 1123;
 
 const TOOL_CONFIG: Array<{
   id: ToolMode;
@@ -121,7 +124,9 @@ export default function PdfEdit() {
   const [selectedIndex, setSelectedIndex] =
     useState<number | null>(null);
 
-  /* TEXT */
+  /* =========================
+     TEXT
+  ========================= */
 
   const [text, setText] =
     useState("Sample Text");
@@ -134,7 +139,9 @@ export default function PdfEdit() {
       DEFAULT_TEXT_COLOR
     );
 
-  /* POSITION */
+  /* =========================
+     POSITION
+  ========================= */
 
   const [x, setX] =
     useState(50);
@@ -142,7 +149,9 @@ export default function PdfEdit() {
   const [y, setY] =
     useState(50);
 
-  /* SIZE */
+  /* =========================
+     SIZE
+  ========================= */
 
   const [width, setWidth] =
     useState(200);
@@ -150,7 +159,9 @@ export default function PdfEdit() {
   const [height, setHeight] =
     useState(80);
 
-  /* RECTANGLE */
+  /* =========================
+     RECTANGLE
+  ========================= */
 
   const [rectangleColor, setRectangleColor] =
     useState<RGBColor>(
@@ -160,7 +171,9 @@ export default function PdfEdit() {
   const [borderWidth, setBorderWidth] =
     useState(2);
 
-  /* HIGHLIGHT */
+  /* =========================
+     HIGHLIGHT
+  ========================= */
 
   const [highlightColor, setHighlightColor] =
     useState<RGBColor>(
@@ -170,7 +183,9 @@ export default function PdfEdit() {
   const [highlightOpacity, setHighlightOpacity] =
     useState(0.35);
 
-  /* LINE */
+  /* =========================
+     LINE
+  ========================= */
 
   const [endX, setEndX] =
     useState(250);
@@ -186,7 +201,9 @@ export default function PdfEdit() {
   const [lineThickness, setLineThickness] =
     useState(2);
 
-  /* IMAGE */
+  /* =========================
+     IMAGE
+  ========================= */
 
   const [imageData, setImageData] =
     useState<string | null>(null);
@@ -200,7 +217,9 @@ export default function PdfEdit() {
   const [imageHeight, setImageHeight] =
     useState(120);
 
-  /* UI */
+  /* =========================
+     UI
+  ========================= */
 
   const [loading, setLoading] =
     useState(false);
@@ -308,6 +327,10 @@ export default function PdfEdit() {
         "Please select a valid PDF file."
       );
       return;
+    }
+
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
     }
 
     setFile(selectedFile);
@@ -771,6 +794,12 @@ export default function PdfEdit() {
    */
 
   function resetEditor() {
+    if (previewUrl) {
+      URL.revokeObjectURL(
+        previewUrl
+      );
+    }
+
     setItems([]);
     setSelectedIndex(null);
 
@@ -779,6 +808,30 @@ export default function PdfEdit() {
     );
 
     setFontSize(18);
+
+    setTextColor(
+      DEFAULT_TEXT_COLOR
+    );
+
+    setRectangleColor(
+      DEFAULT_RECT_COLOR
+    );
+
+    setHighlightColor(
+      DEFAULT_HIGHLIGHT_COLOR
+    );
+
+    setLineColor(
+      DEFAULT_LINE_COLOR
+    );
+
+    setBorderWidth(2);
+
+    setHighlightOpacity(
+      0.35
+    );
+
+    setLineThickness(2);
 
     setPage(1);
     setCurrentPreviewPage(1);
@@ -795,11 +848,12 @@ export default function PdfEdit() {
     setImageData(null);
     setImageName("");
 
-    setHighlightOpacity(
-      0.35
-    );
+    setImageWidth(200);
+    setImageHeight(120);
 
     setZoom(100);
+
+    setPreviewUrl(null);
   }
 
   /*
@@ -971,12 +1025,16 @@ export default function PdfEdit() {
   function goToPage(
     value: number
   ) {
+    if (!Number.isFinite(value)) {
+      return;
+    }
+
     const next =
       Math.max(
         1,
         Math.min(
           pageCount,
-          value
+          Math.floor(value)
         )
       );
 
@@ -1020,9 +1078,9 @@ export default function PdfEdit() {
 
   if (!file) {
     return (
-      <main className="min-h-screen bg-slate-50 px-4 py-10 text-slate-900 dark:bg-slate-950 dark:text-white sm:px-6 lg:px-8">
+      <main className="min-h-auto rounded-2xl bg-slate-50 px-4 py-10 text-slate-900 dark:bg-slate-950 dark:text-white sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl">
-          <div className="mb-10 text-center">
+          {/* <div className="mb-10 text-center">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-xs font-semibold text-blue-700 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300">
               <span>✦</span>
               Browser PDF Editor
@@ -1038,7 +1096,7 @@ export default function PdfEdit() {
               hide sensitive information
               and export your edited PDF.
             </p>
-          </div>
+          </div> */}
 
           <label
             htmlFor="pdf-upload"
@@ -1050,7 +1108,7 @@ export default function PdfEdit() {
               setDragging(false)
             }
             onDrop={handleDrop}
-            className={`group relative flex min-h-\[430px\] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-\[2rem\] border-2 border-dashed p-8 text-center transition-all ${
+            className={`group relative flex min-h-50 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed p-8 text-center transition-all ${
               dragging
                 ? "scale-[1.01] border-blue-500 bg-blue-50 shadow-xl shadow-blue-100 dark:bg-blue-950/30"
                 : "border-slate-300 bg-white shadow-sm hover:border-blue-400 hover:shadow-xl dark:border-slate-700 dark:bg-slate-900"
@@ -1066,23 +1124,47 @@ export default function PdfEdit() {
               className="hidden"
             />
 
-            <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-3xl bg-blue-100 text-5xl shadow-inner dark:bg-blue-950/60">
-              📄
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-red-100 text-red-600 transition group-hover:scale-105 dark:bg-red-950/40 dark:text-red-400">
+              <svg
+                className="h-8 w-8"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.7"
+              >
+                <path
+                  d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                />
+                <path d="M14 2v6h6" />
+                <path d="M8 13h8M8 17h5" />
+              </svg>
             </div>
 
-            <h2 className="text-2xl font-bold">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
               Drop your PDF here
-            </h2>
+            </h3>
 
-            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-              or click anywhere to browse
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              or choose a PDF file from your device
             </p>
 
-            <div className="mt-7 rounded-xl bg-blue-600 px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 transition group-hover:bg-blue-700">
-              Choose PDF
-            </div>
+            <span className="mt-5 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition group-hover:bg-blue-700">
+              <svg
+                className="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M12 3v12" />
+                <path d="m7 10 5 5 5-5" />
+                <path d="M5 21h14" />
+              </svg>
 
-            <div className="mt-7 flex flex-wrap justify-center gap-2">
+              Choose PDF
+            </span>
+
+            {/* <div className="mt-7 flex flex-wrap justify-center gap-2">
               {[
                 "Text",
                 "Highlight",
@@ -1097,12 +1179,12 @@ export default function PdfEdit() {
                   {label}
                 </span>
               ))}
-            </div>
+            </div> */}
 
-            <p className="mt-6 text-xs text-slate-400">
+            {/* <p className="mt-6 text-xs text-slate-400">
               🔒 Files are processed locally
               in your browser.
-            </p>
+            </p> */}
           </label>
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -1142,8 +1224,9 @@ export default function PdfEdit() {
    */
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
+    <main className="min-h-screen rounded-2xl bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white">
       <div className="mx-auto max-w-[1700px] px-3 py-4 sm:px-5 lg:px-6">
+
         {/* HEADER */}
 
         <header className="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -1234,9 +1317,11 @@ export default function PdfEdit() {
         {/* EDITOR GRID */}
 
         <div className="grid gap-4 xl:grid-cols-[350px_minmax(0,1fr)]">
+
           {/* SIDEBAR */}
 
           <aside className="space-y-4">
+
             {/* TOOLS */}
 
             <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -1757,7 +1842,7 @@ export default function PdfEdit() {
                   </p>
                 </div>
               ) : (
-                <div className="max-h-\[360px\] space-y-2 overflow-y-auto pr-1">
+                <div className="max-h-90 space-y-2 overflow-y-auto pr-1">
                   {pageItems.map(
                     ({
                       item,
@@ -1860,6 +1945,7 @@ export default function PdfEdit() {
 
           <section className="min-w-0">
             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+
               {/* PREVIEW HEADER */}
 
               <div className="flex flex-col gap-3 border-b border-slate-200 p-4 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
@@ -1908,7 +1994,7 @@ export default function PdfEdit() {
                     −
                   </button>
 
-                  <span className="min-w-\[60px\] text-center text-xs font-bold">
+                  <span className="min-w-15 text-center text-xs font-bold">
                     {zoom}%
                   </span>
 
@@ -1941,28 +2027,39 @@ export default function PdfEdit() {
                 </div>
               </div>
 
-              {/* PDF */}
+              {/* =========================
+                  A4 PDF PREVIEW
+              ========================= */}
 
-              <div className="min-h-\[720px\] overflow-auto bg-slate-100 p-3 dark:bg-slate-950 sm:p-6">
+              <div className="relative min-h-180 overflow-auto bg-slate-100 p-4 dark:bg-slate-950 sm:p-8">
+
                 {previewUrl ? (
-                  <div
-                    className="mx-auto transition-all duration-200"
-                    style={{
-                      width: `${zoom}%`,
-                      minWidth:
-                        zoom < 80
-                          ? "650px"
-                          : undefined,
-                    }}
-                  >
-                    <iframe
-                      title="PDF Live Preview"
-                      src={`${previewUrl}#page=${currentPreviewPage}&zoom=${zoom}&toolbar=0`}
-                      className="h-\[850px\] w-full rounded-xl border border-slate-300 bg-white shadow-2xl dark:border-slate-700"
-                    />
+                  <div className="flex min-w-max justify-center">
+
+                    <div
+                      className="relative overflow-hidden bg-white shadow-2xl ring-1 ring-black/5 transition-all duration-200"
+                      style={{
+                        width: `${A4_WIDTH * (zoom / 100)}px`,
+                        height: `${A4_HEIGHT * (zoom / 100)}px`,
+                      }}
+                    >
+                      <iframe
+                        key={`${previewUrl}-${currentPreviewPage}-${zoom}`}
+                        title="PDF Live Preview"
+                        src={`${previewUrl}#page=${currentPreviewPage}&zoom=${zoom}&toolbar=0&navpanes=0&scrollbar=0`}
+                        className="absolute left-0 top-0 border-0 bg-white"
+                        style={{
+                          width: `${A4_WIDTH}px`,
+                          height: `${A4_HEIGHT}px`,
+                          transform: `scale(${zoom / 100})`,
+                          transformOrigin:
+                            "top left",
+                        }}
+                      />
+                    </div>
                   </div>
                 ) : (
-                  <div className="flex min-h-\[650px\] items-center justify-center">
+                  <div className="flex min-h-162.5 items-center justify-center">
                     <div className="text-center">
                       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-3xl shadow dark:bg-slate-900">
                         📄
@@ -1973,8 +2070,7 @@ export default function PdfEdit() {
                       </p>
 
                       <p className="mt-1 text-xs text-slate-500">
-                        Your edited PDF will appear
-                        here.
+                        Your edited PDF will appear here.
                       </p>
                     </div>
                   </div>
@@ -2061,10 +2157,10 @@ export default function PdfEdit() {
           />
 
           <SummaryCard
-            icon="🔒"
-            title="Privacy"
-            value="Local"
-            description="Browser processing"
+            icon="📐"
+            title="Page Size"
+            value="A4"
+            description="794 × 1123 px"
           />
         </div>
 
@@ -2291,19 +2387,23 @@ function NumberField({
 
       <input
         type="number"
-        value={Number.isFinite(value) ? value : ""}
+        value={
+          Number.isFinite(value)
+            ? value
+            : ""
+        }
         min={min}
         max={max}
         onChange={(event) => {
-          const value =
+          const next =
             Number(
               event.target.value
             );
 
           if (
-            Number.isFinite(value)
+            Number.isFinite(next)
           ) {
-            setValue(value);
+            setValue(next);
           }
         }}
         className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-950"

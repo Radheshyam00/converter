@@ -450,7 +450,7 @@ export default function ImageCrop() {
     <div className="mx-auto w-full max-w-5xl space-y-6">
 
       {/* Header */}
-      <div>
+      {/* <div>
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400">
             <svg
@@ -475,7 +475,7 @@ export default function ImageCrop() {
             </p>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Upload / Drawing Preview */}
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">

@@ -136,7 +136,7 @@ export default function BackgroundRemove() {
   return (
     <div className="mx-auto w-full max-w-4xl space-y-6">
       {/* Header */}
-      <div>
+      {/* <div>
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400">
             <svg
@@ -169,7 +169,7 @@ export default function BackgroundRemove() {
             </p>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Upload / Preview */}
       <div className="grid gap-6 md:grid-cols-2">
@@ -370,7 +370,7 @@ export default function BackgroundRemove() {
               />
             ) : (
               <div className="px-6 text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white/80 text-slate-400 shadow-sm dark:bg-slate-900/80 dark:text-slate-500">
+                <div className="mx-auto flex h-46 w-46 items-center justify-center rounded-2xl bg-white/80 text-slate-400 shadow-sm dark:bg-slate-900/80 dark:text-slate-500">
                   <svg
                     className="h-7 w-7"
                     viewBox="0 0 24 24"
@@ -389,14 +389,14 @@ export default function BackgroundRemove() {
                   </svg>
                 </div>
 
-                <p className="mt-4 text-sm font-medium text-slate-500 dark:text-slate-400">
+                {/* <p className="mt-4 text-sm font-medium text-slate-500 dark:text-slate-400">
                   Result will appear here
                 </p>
 
                 <p className="mt-1 text-xs text-slate-400">
                   The background will be replaced with
                   transparency.
-                </p>
+                </p> */}
               </div>
             )}
           </div>
